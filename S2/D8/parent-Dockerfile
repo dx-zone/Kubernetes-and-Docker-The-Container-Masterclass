@@ -1,0 +1,7 @@
+
+FROM ubuntu:16.04
+
+# execute the following instructions on any image created out of this base image (ubuntu:16.04)
+ONBUILD RUN echo "Greeting from your parent image" > /tmp/greetings.txt 
+
+CMD ["bash"]
