@@ -856,3 +856,9 @@ docker ps -a # On the worker node
 # Clean the cluster
 docker swarm leave
 
+# Clean/delete the docker machines/hosts
+docker-machine ls
+docker-machine rm manager
+docker-machine rm worker-1
+docker-machine rm worker-2
+docker-machine ls
