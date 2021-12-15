@@ -502,3 +502,357 @@ docker run -itd --name 2048 \
 -p 8080:80 \
 nginx:latest
 
+#########################
+## Docker Compose Tool ##
+#########################
+#
+# Docker Compose is a tool for running multi-container applications on Docker defined using the Compose file format. A Compose file is used to define how the one or more containers that make up your application are configured. Once you have a Compose file, you can create and start your application with a single command: docker compose up.
+# https://github.com/docker/compose/
+#
+# Demo Structure of Compose file
+# In this demo I'll create a Docker compose file to deploy a wordpress container
+# and a database container.
+# Then I will download docker-compose tool to build my containers with the docker-compose tool
+#
+
+# Create a Docker compose file on Linux
+mkdir -p CC_Docker/S6
+cd CC_Docker/S6
+
+cat > docker-compose.yaml <<'endmsg'
+
+version: '3.3'
+
+services:
+
+  db:      
+    image: mysql:5.7
+    container_name: mysql_database     
+    volumes:
+      - db_data:/var/lib/mysql     
+    restart: always 
+    environment:
+      MYSQL_ROOT_PASSWORD: word@press
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: abc@123
+
+  wordpress: 
+    depends_on:
+      - db
+    image: wordpress:latest
+    container_name: wd_frontend      
+    volumes:
+      - wordpress_files:/var/www/html 
+    ports:
+      - "8000:80"     
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: abc@123
+
+volumes:
+    wordpress_files:
+    db_data:
+
+
+
+endmsg
+
+
+# Create a Docker compose file on Windows
+
+echo version: '3.3'^
+
+services:^
+
+  db:^
+    image: mysql:5.7^
+    container_name: mysql_database^
+    volumes:^
+      - db_data:/var/lib/mysql^
+    restart: always^
+    environment:^
+      MYSQL_ROOT_PASSWORD: word@press^
+      MYSQL_DATABASE: wordpress^
+      MYSQL_USER: wordpress^
+      MYSQL_PASSWORD: abc@123^
+
+  wordpress:^
+    depends_on:^
+      - db^
+    image: wordpress:latest^
+    container_name: wd_frontend^
+    volumes:^
+      - wordpress_files:/var/www/html^
+    ports:^
+      - "8000:80"^
+    restart: always^
+    environment:^
+      WORDPRESS_DB_HOST: db:3306^
+      WORDPRESS_DB_USER: wordpress^
+      WORDPRESS_DB_PASSWORD: abc@123^
+
+volumes:^
+    wordpress_files:^
+    db_data:^
+
+> "docker-compose.yaml"
+
+type "docker-compose.yaml"
+
+
+# Continue with the Docker compose lab (download docker-compose)
+
+# Check for the lates release at https://github.com/docker/compose/releases
+# For Linux lab
+curl -L https://github.com/docker/compose/releases/download/v2.2.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+
+# For Windows lab
+mkdir "C:\Portable Apps\Docker Compose"
+cd "C:\Portable Apps\Docker Compose"
+curl -L https://github.com/docker/compose/releases/download/v2.2.2/docker-compose-windows-x86_64.exe -o docker-compose.exe
+
+docker-compose --version
+
+# Build the wordpress container and the database container based on the docker-compose file
+docker-compose up -d
+
+docker ps -a
+
+# Log into the Wordpress at http://localhost:8000/
+# Log into the database container
+docker exec -it mysql_database bash
+
+# Build another database container but as a client to connect to the existing database container
+docker run -it --link mysql_database:mysql --rm mysql sh -c 'exec mysql -h"$MYSQL_PORT_3306_TCP_ADDR" -P"$MYSQL_PORT_3306_TCP_PORT" -uroot -p"$MYSQL_ENV_MYSQL_ROOT_PASSWORD"'
+
+docker network connect bridge mysql_database
+
+
+###################################
+## Docker Compose Commands (CLI) ##
+###################################
+#
+
+# View composed YAML file
+docker compose-config
+
+# Extract specific information from the YAML file
+docker-compose config --services
+docker-compose config --volumes
+docker-compose config --images
+
+# List all the images used to create containers for services in composed file
+docker-compose images
+
+# Fecth the log output from the server
+docker-compose logs
+docker-compose logs --tail=10
+
+# List the containers created with docker-compose
+docker-compose ps
+
+# Display all the running processes inside all of the containers
+docker-compose top
+
+# Cleanup command to stop the services, remove the containers, and remove additional resources, such as networks
+docker-compose down
+
+
+
+################################################
+## Container Orchestration with Docker Swarm. ##
+################################################
+#
+# A Container Orchestrator is a tool used to provision, schedule and manage containers
+# at large scale over one or more clusters of
+# multiple hosts
+#
+
+# Lab: Setting Up Swarm
+# Download and install docker-machine
+
+# On Linux
+curl -L https://github.com/docker/machine/releases/download/v0.16.2/docker-machine-`uname -s`-`uname -m` >/tmp/docker-machine &&
+    chmod +x /tmp/docker-machine &&
+    sudo cp /tmp/docker-machine /usr/local/bin/docker-machine
+
+# On Mac OS X
+curl -L https://github.com/docker/machine/releases/download/v0.16.2/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
+  chmod +x /usr/local/bin/docker-machine
+
+# On Windows with Git bash
+if [[ ! -d "$HOME/bin" ]]; then mkdir -p "$HOME/bin"; fi && \
+curl -L https://github.com/docker/machine/releases/download/v0.16.2/docker-machine-Windows-x86_64.exe > "$HOME/bin/docker-machine.exe" && \
+chmod +x "$HOME/bin/docker-machine.exe"
+
+
+docker-machine version
+docker-machine --version
+
+###############################################################
+# Lab: Container Orchestration with Docker Swarm (Swarm Mode) #
+###############################################################
+
+# Creating one (1) docker manager and two (2) docker worker with VirtualBox
+docker-machine create --driver virtualbox manager
+docker-machine create --driver virtualbox worker-1
+docker-machine create --driver virtualbox worker-2
+
+# Creating one (1) docker manager and two (2) docker worker with VMware
+docker-machine create --driver vmware manager
+docker-machine create --driver vmware worker-1
+docker-machine create --driver vmware worker-2
+
+# List the docker machines node created
+docker-machine ls
+
+# Stop the docker machines/node
+docker-machine stop manager
+
+# Start the docker machines/node
+docker-machine start manager
+
+# Display the IP of the docker nodes
+docker-machine ip manager
+docker-machine ip worker-1
+docker-machine ip worker-2
+
+# Display detailed information about the docker manager node
+docker-machine inspect manager
+
+# Log into the shell of the docker manager node
+docker-machine ssh manager
+
+# Initialise Docker Swarm on the manager node
+docker-machine ls # Make note of the manager and the worker's IP
+docker-machine ssh manager
+
+docker swarm init --advertise-addr <manager ip>
+docker swarm init --advertise-addr 192.168.45.128
+docker swarm join-token worker
+
+# Remove a worker node from the manager (swarm node)
+docker swarm leave
+
+
+######################################
+# LAB: Docker Swarm with Two Workers #
+######################################
+
+# Create the docker manager and the two workers nodes
+docker-machine create --driver vmware manager
+docker-machine create --driver vmware worker-1
+docker-machine create --driver vmware worker-2
+
+# Check the nodes created and log into the manager's ssh
+# Make note of the manager's IP, you will need it when initializing the manager
+docker-machine ls
+docker-machine ssh manager
+
+# From the manager's shell, initialize docker swarm mode as manager
+# Copy the command and the token displayed on the shell
+docker swarm init --advertise-addr 192.168.45.128
+exit
+
+# Log into the worker-1 node's shell
+# Join the manager's node with the command+token copied from the manager's node
+docker-machine ssh worker-1
+docker swarm join --token SWMTKN-1-2s0yhmkw46cpavtlttdvh63r7qj0vv7lme6rk7eyo7tok3b2tf-cubcxboys00ynde878t00ytov 192.168.45.128:2377
+exit
+
+# Log into the worker-2 node's shell
+# Join the manager's node with the command+token copied from the manager's node
+docker-machine ssh worker-2
+docker swarm join --token SWMTKN-1-2s0yhmkw46cpavtlttdvh63r7qj0vv7lme6rk7eyo7tok3b2tf-cubcxboys00ynde878t00ytov 192.168.45.128:2377
+exit
+
+# Log into the manager node's shell
+# Check the status of the nodes and inspect the nodes
+docker-machine ssh manager
+docker node ls
+docker node inspect --pretty self
+docker node inspect --pretty manager
+docker node inspect --pretty worker-1
+docker node inspect --pretty worker-2
+
+# Create a service called web-server from latest nginx image
+# and have three (3) replicas or three (3) containers
+docker service create --name web-server -p 8080:80 --replicas 3 nginx:latest
+
+# Check and inspect the service/container
+docker service ls
+
+docker service ps web-server
+
+docker service inspect web-server
+
+docker ps -a
+
+docker container inspect web-server.1.ncobfinnd3cabh2oeu7k71a87
+
+# Copy the IP of the manager and the worker to access
+# the web-server container from the web browser
+docker node inspect --pretty manager
+docker node inspect --pretty worker-1
+docker node inspect --pretty worker-2
+
+# Access the container over the web
+http://192.168.45.128:8080
+http://192.168.45.129:8080
+http://192.168.45.130:8080
+
+
+##################################
+# Making a Node Leave Your Swarm #
+##################################
+
+# Make a node to migrate the containers hosted and leave the cluster (drain)
+docker node update --availability drain worker-2 # Execute on the manager node
+
+# Check the nodes
+docker node ls
+
+# Check where the container hosted in the node was migrated to
+docker service ps web-server
+
+# Make the worker node to leave the swarm cluster
+docker swarm leave
+
+# Remove the inactive worker node from the cluster
+docker node rm worker-2
+
+
+###################################
+# Scaling and Updating with Swarm #
+###################################
+
+
+# Increase up replicas to six
+docker service scale web-server=6
+
+# Check the containers
+docker service ps web-sever
+
+docker ps -a # On the manager node
+docker ps -a # On the worker node
+
+# Updating/changing the image of the container
+docker service update --image nginx:alpine web-server
+
+# Inspect the container
+docker service inspect --pretty web-server
+
+# Removing the docker service
+docker service rm web-server
+
+docker ps -a # On the manager node
+docker ps -a # On the worker node
+
+# Clean the cluster
+docker swarm leave
+
