@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: env-pod
+  labels:
+    purpose: demonstrate-envars
+spec:
+  containers:
+  - name: env-container
+  image: gcr.io/google-samples/node-hello:1.0 # Container image from Google Container Registry instead from Docker
+  env:
+  - name: POD_GREETING
+    value: "Welcome!"
+  - name: POD_FAREWELL
+    value: "We don't want you to go! :("

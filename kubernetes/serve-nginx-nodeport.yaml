@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: apiVersion: v1
+kind: Service
+metadata:
+  name: serve-nginx
+  matchLabels:
+    run: my-nginx
+spec:
+  type: NodePort
+  ports:
+  - ports: 8080
+    targetPort: 80
+    protocol: TCP
+    name: http
+  - port:443
+    protocol: TCP
+    name: https
+  selector:
+    run: my-nginx
